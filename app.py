@@ -13,46 +13,22 @@ import requests
 st.set_page_config(page_title='Saunter Playback', page_icon=':walking:')
 st.title('Saunter Playback')
 
-# Get the GitHub repository URL from the user
-repo_url = st.text_input('Enter the GitHub repository URL containing the MP3 file:')
-
-# Get the MP3 file path from the user
-mp3_path = st.text_input('Enter the path to the MP3 file within the repository:')
-
 # Function to download the MP3 file from GitHub
-def download_mp3(repo_url, mp3_path):
-    # Extract the repository owner and name from the URL
-    repo_parts = repo_url.split('/')
-    repo_owner = repo_parts[-2]
-    repo_name = repo_parts[-1]
-    
-    # Construct the API URL to get the MP3 file content
-    api_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{mp3_path}'
-    
-    # Make a GET request to the API URL
-    response = requests.get(api_url)
+def download_mp3(url):
+    response = requests.get(url)
     
     if response.status_code == 200:
-        # Extract the download URL from the response
-        download_url = response.json()['download_url']
-        
-        # Download the MP3 file content
-        mp3_content = requests.get(download_url).content
-        
         # Save the MP3 file locally
         with open('audio.mp3', 'wb') as file:
-            file.write(mp3_content)
+            file.write(response.content)
         
         st.success('MP3 file downloaded successfully!')
     else:
         st.error('Failed to download the MP3 file.')
 
-# Button to trigger the MP3 file download
-if st.button('Download MP3'):
-    if repo_url and mp3_path:
-        download_mp3(repo_url, mp3_path)
-    else:
-        st.warning('Please provide both the repository URL and MP3 file path.')
+# Download the MP3 file from the specified GitHub URL
+mp3_url = 'https://github.com/vr00n/streamlit-audiomap/raw/main/ny-doc.mp3'
+download_mp3(mp3_url)
 
 # Load the downloaded MP3 file
 audio_path = 'audio.mp3'
