@@ -1,19 +1,14 @@
 import streamlit as st
-import json
 import time
-import numpy as np
-from IPython.display import Audio, display, HTML
-from ipyleaflet import Map, Marker, Polyline
-from ipywidgets import Button, VBox
-from pydub import AudioSegment
 import random
-import requests
+from pydub import AudioSegment
+from ipyleaflet import Map, Marker, Polyline
 
 # Set page title and header
 st.set_page_config(page_title='Saunter Playback', page_icon=':walking:')
 st.title('Saunter Playback')
 
-# Load the downloaded MP3 file
+# Load the hardcoded MP3 file
 audio_path = 'ny-doc.mp3'
 audio = AudioSegment.from_mp3(audio_path)
 
@@ -52,7 +47,6 @@ saunter_map.add_layer(path)
 st.components.v1.html(saunter_map._repr_html_(), height=400)
 
 # Create an Audio object and display it
-audio_widget = Audio(audio_path, autoplay=False)
 st.audio(audio_path)
 
 # Function to update the path on the map, center the map, and add a pin
