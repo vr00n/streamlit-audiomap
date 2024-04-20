@@ -1,80 +1,59 @@
 import streamlit as st
-import time
+import folium
+from folium.plugins import MarkerCluster
 import random
 from pydub import AudioSegment
-AudioSegment.converter = "/usr/bin/ffmpeg"  # Adjust the path based on where ffmpeg is installed
-from ipyleaflet import Map, Marker, Polyline
+import numpy as np
 
-# Set page title and header
-st.set_page_config(page_title='Saunter Playback', page_icon=':walking:')
-st.title('Saunter Playback')
-
-# Load the hardcoded MP3 file
-audio_path = 'ny-doc.mp3'
-audio = AudioSegment.from_mp3(audio_path)
-
-
-# Get the duration of the audio in seconds
-duration = len(audio) / 1000
-
+# Function to generate random locations in New York City
 def generate_random_location():
+    # New York City bounding box coordinates
     min_lat, max_lat = 40.477399, 40.917577
     min_lon, max_lon = -74.259090, -73.700272
     latitude = random.uniform(min_lat, max_lat)
     longitude = random.uniform(min_lon, max_lon)
     return latitude, longitude
 
-# Create a map centered on a random point in New York
-initial_location = generate_random_location()
-saunter_map = folium.Map(location=initial_location, zoom_start=12)
+# Generate saunter data with random locations
+def generate_saunter_data(duration, interval=5):
+    num_points = int(duration / interval)  # Generate a point every 5 seconds
+    return [{'timestamp': i * interval, 'latitude': latitude, 'longitude': longitude}
+            for i, (latitude, longitude) in enumerate(generate_random_location() for _ in range(num_points + 1))]
 
-# Add a marker to the map
-folium.Marker(initial_location).add_to(saunter_map)
+# Load and prepare audio
+audio_path = 'ny-doc.mp3'  # Update with the path to your audio file
 
-# Display the map in Streamlit
-folium_static(saunter_map)
+# Use pydub to determine the length of the audio file in seconds
+audio = AudioSegment.from_mp3(audio_path)
+duration = len(audio) / 1000  # duration in seconds
 
-# Generate random locations in New York City for the saunter
+# Generate data based on actual audio duration
+saunter_data = generate_saunter_data(duration)
 
-# Generate saunter data with random locations and timestamps
-num_points = int(duration / 5)  # Assuming a point every 5 seconds
-saunter_data = []
-for i in range(num_points + 1):
-    timestamp = i * 5
-    latitude, longitude = generate_random_location()
-    saunter_data.append({'timestamp': timestamp, 'latitude': latitude, 'longitude': longitude})
+# Function to create a Folium map with markers
+def create_map(data):
+    start_location = (data[0]['latitude'], data[0]['longitude'])
+    m = folium.Map(location=start_location, zoom_start=12)
+    marker_cluster = MarkerCluster().add_to(m)
+    for point in data:
+        folium.Marker(location=(point['latitude'], point['longitude']), popup=f"Timestamp: {point['timestamp']}s").add_to(marker_cluster)
+    return m
 
-# Create a map centered on the starting point of the saunter
-map_center = (saunter_data[0]['latitude'], saunter_data[0]['longitude'])
-saunter_map = Map(center=map_center, zoom=10)
+# Initially create the map with all markers
+saunter_map = create_map(saunter_data)
+map_html = saunter_map._repr_html_()
 
-# Create a Polyline to represent the path
-path = Polyline(locations=[], color='blue')
-saunter_map.add_layer(path)
+# Display audio player
+st.audio(audio_path, format='audio/mp3')
 
-# Display the map
-st.components.v1.html(saunter_map._repr_html_(), height=400)
+# Display map
+st.markdown(map_html, unsafe_allow_html=True)
 
-# Create an Audio object and display it
-st.audio(audio_path)
-
-# Function to update the path on the map, center the map, and add a pin
-def update_path(index):
-    path.locations = [(data['latitude'], data['longitude']) for data in saunter_data[:index+1]]
-    saunter_map.center = (saunter_data[index]['latitude'], saunter_data[index]['longitude'])
-    
-    # Add a pin at the current location
-    marker = Marker(location=(saunter_data[index]['latitude'], saunter_data[index]['longitude']))
-    saunter_map.add_layer(marker)
-
-# Function to handle audio playback and map synchronization
-def play_audio():
-    for i in range(len(saunter_data) - 1):
-        update_path(i)
-        time.sleep(saunter_data[i+1]['timestamp'] - saunter_data[i]['timestamp'])
-    
-    st.success('Saunter playback completed.')
-
-# Create a button to start the audio and map synchronization
-if st.button('Play'):
-    play_audio()
+# Button to update the map for demonstration of path
+if st.button('Show Path'):
+    index = st.session_state.get('index', 0)
+    if index < len(saunter_data):
+        st.session_state['index'] = index + 1
+    # Redraw the map with only part of the data
+    partial_map = create_map(saunter_data[:st.session_state['index']])
+    st.markdown(partial_map._repr_html_(), unsafe_allow_html=True)
