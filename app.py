@@ -4,6 +4,7 @@ import folium
 from folium.plugins import MarkerCluster
 import random
 from pydub import AudioSegment
+import time
 
 # Function to generate random locations in New York City
 def generate_random_location():
@@ -38,20 +39,18 @@ def create_map(data):
         folium.Marker(location=(point['latitude'], point['longitude']), popup=f"Timestamp: {point['timestamp']}s").add_to(marker_cluster)
     return m
 
-# Initially create the map with all markers
-saunter_map = create_map(saunter_data)
-
 # Display audio player
 st.audio(audio_path, format='audio/mp3')
 
-# Display map using st_folium
-st_folium(saunter_map, width=725, height=500)
+# Play button functionality
+def play_saunter(data):
+    for index, point in enumerate(data):
+        # Redraw the map with only part of the data up to the current index
+        partial_map = create_map(data[:index+1])
+        st_folium(partial_map, width=725, height=500)
+        # Delay to simulate passing time, adjust delay as necessary
+        time.sleep(5)
 
-# Button to update the map for demonstration of path
-if st.button('Show Path'):
-    index = st.session_state.get('index', 0)
-    if index < len(saunter_data):
-        st.session_state['index'] = index + 1
-    # Redraw the map with only part of the data
-    partial_map = create_map(saunter_data[:st.session_state['index']])
-    st_folium(partial_map, width=725, height=500)
+# Button to start the playback simulation
+if st.button('Play Saunter'):
+    play_saunter(saunter_data)
