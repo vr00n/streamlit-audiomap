@@ -1,5 +1,5 @@
+streamlit
 pydub
-scipy
-ipyleaflet
+numpy
 ipywidgets
-ffmpeg
+ipyleaflet
