@@ -3,3 +3,5 @@ pydub
 numpy
 ipywidgets
 ipyleaflet
+folium 
+streamlit-folium
