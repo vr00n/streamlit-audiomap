@@ -2,6 +2,7 @@ import streamlit as st
 import time
 import random
 from pydub import AudioSegment
+AudioSegment.converter = "/usr/bin/ffmpeg"  # Adjust the path based on where ffmpeg is installed
 from ipyleaflet import Map, Marker, Polyline
 
 # Set page title and header
@@ -11,6 +12,7 @@ st.title('Saunter Playback')
 # Load the hardcoded MP3 file
 audio_path = 'ny-doc.mp3'
 audio = AudioSegment.from_mp3(audio_path)
+
 
 # Get the duration of the audio in seconds
 duration = len(audio) / 1000
