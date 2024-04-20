@@ -2,3 +2,4 @@ pydub
 scipy
 ipyleaflet
 ipywidgets
+ffmpeg
