@@ -4,12 +4,11 @@ import folium
 import random
 from pydub import AudioSegment
 
-# Initialize session state for map properties if not already set
-if 'map_initialized' not in st.session_state:
-    st.session_state['map_initialized'] = False
-    st.session_state['markers'] = []
-    st.session_state['center'] = (40.7128, -74.0060)
-    st.session_state['zoom'] = 12
+# Ensure session state variables are initialized
+if 'markers' not in st.session_state:
+    st.session_state.markers = []
+if 'current_index' not in st.session_state:
+    st.session_state.current_index = 0
 
 # Function to generate random locations in New York City
 def generate_random_location():
@@ -26,36 +25,39 @@ def generate_saunter_data(duration, interval=5):
             for i, (latitude, longitude) in enumerate(generate_random_location() for _ in range(num_points + 1))]
 
 # Load and prepare audio
-audio_path = 'ny-doc.mp3'
+audio_path = 'ny-doc.mp3'  # Path to your MP3 file
 audio = AudioSegment.from_mp3(audio_path)
-duration = len(audio) / 1000  # in seconds
+duration = len(audio) / 1000  # Convert duration from milliseconds to seconds
 saunter_data = generate_saunter_data(duration)
 
-def create_map():
-    m = folium.Map(location=st.session_state['center'], zoom_start=st.session_state['zoom'])
+# Function to create and update Folium map
+def create_map(center, zoom=12):
+    m = folium.Map(location=center, zoom_start=zoom)
     fg = folium.FeatureGroup(name="Markers")
-    for point in st.session_state['markers']:
-        folium.Marker([point['latitude'], point['longitude']], popup=f"Timestamp: {point['timestamp']}s").add_child(fg)
-    return m, fg
+    for point in st.session_state.markers:
+        folium.Marker([point['latitude'], point['longitude']], popup=f"Timestamp: {point['timestamp']}s").add_to(fg)
+    m.add_child(fg)
+    return m
 
 # Display audio player
 st.audio(audio_path, format='audio/mp3')
 
-# Initialize map once
-if not st.session_state['map_initialized']:
-    m, fg = create_map()
-    st.session_state['map_initialized'] = True
+# Map handling
+center = (saunter_data[0]['latitude'], saunter_data[0]['longitude']) if saunter_data else (40.7128, -74.0060)
+map_object = create_map(center=center)
 
 # Display map using st_folium
-st_folium(m, center=st.session_state['center'], zoom=st.session_state['zoom'], key="new", feature_group_to_add=fg, height=400, width=700)
+map_display = st_folium(map_object, width=700, height=500)
 
-# Function to update the map dynamically
+# Function to simulate map and audio playback synchronization
 def play_saunter():
-    for point in saunter_data:
-        st.session_state['markers'].append(point)
-        st.session_state['center'] = (point['latitude'], point['longitude'])
-        m, fg = create_map()
-        st_folium(m, center=st.session_state['center'], zoom=st.session_state['zoom'], key="new", feature_group_to_add=fg, height=400, width=700)
+    for index in range(st.session_state.current_index, len(saunter_data)):
+        st.session_state.markers.append(saunter_data[index])
+        map_object = create_map(center=(saunter_data[index]['latitude'], saunter_data[index]['longitude']))
+        map_display = st_folium(map_object, width=700, height=500)
+        st.session_state.current_index += 1
+        st.experimental_rerun()
 
+# Button to start the playback simulation
 if st.button('Play Saunter'):
     play_saunter()
