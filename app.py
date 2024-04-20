@@ -17,17 +17,24 @@ audio = AudioSegment.from_mp3(audio_path)
 # Get the duration of the audio in seconds
 duration = len(audio) / 1000
 
-# Generate random locations in New York City for the saunter
 def generate_random_location():
-    # New York City bounding box coordinates
     min_lat, max_lat = 40.477399, 40.917577
     min_lon, max_lon = -74.259090, -73.700272
-    
-    # Generate random latitude and longitude within the bounding box
     latitude = random.uniform(min_lat, max_lat)
     longitude = random.uniform(min_lon, max_lon)
-    
     return latitude, longitude
+
+# Create a map centered on a random point in New York
+initial_location = generate_random_location()
+saunter_map = folium.Map(location=initial_location, zoom_start=12)
+
+# Add a marker to the map
+folium.Marker(initial_location).add_to(saunter_map)
+
+# Display the map in Streamlit
+folium_static(saunter_map)
+
+# Generate random locations in New York City for the saunter
 
 # Generate saunter data with random locations and timestamps
 num_points = int(duration / 5)  # Assuming a point every 5 seconds
