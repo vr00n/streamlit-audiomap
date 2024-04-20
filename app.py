@@ -6,6 +6,14 @@ import random
 from pydub import AudioSegment
 import time
 
+# Initialize session state for map properties if not already set
+if 'zoom' not in st.session_state:
+    st.session_state['zoom'] = 12  # Initial zoom level
+if 'center' not in st.session_state:
+    st.session_state['center'] = (40.7128, -74.0060)  # Initial center of the map (New York City)
+if 'markers' not in st.session_state:
+    st.session_state['markers'] = []  # List to store markers
+
 # Function to generate random locations in New York City
 def generate_random_location():
     min_lat, max_lat = 40.477399, 40.917577
@@ -30,27 +38,23 @@ duration = len(audio) / 1000  # duration in seconds
 # Generate data based on actual audio duration
 saunter_data = generate_saunter_data(duration)
 
-# Function to create a Folium map with markers
-def create_map(data):
-    start_location = (data[0]['latitude'], data[0]['longitude'])
-    m = folium.Map(location=start_location, zoom_start=12)
-    marker_cluster = MarkerCluster().add_to(m)
-    for point in data:
-        folium.Marker(location=(point['latitude'], point['longitude']), popup=f"Timestamp: {point['timestamp']}s").add_to(marker_cluster)
-    return m
-
 # Display audio player
 st.audio(audio_path, format='audio/mp3')
 
-# Play button functionality
-def play_saunter(data):
+# Initial Map Setup
+m = folium.Map(location=st.session_state['center'], zoom_start=st.session_state['zoom'])
+fg = folium.FeatureGroup(name="My Map")
+
+# Function to update the map dynamically
+def update_map(data):
     for index, point in enumerate(data):
-        # Redraw the map with only part of the data up to the current index
-        partial_map = create_map(data[:index+1])
-        st_folium(partial_map, width=725, height=500)
-        # Delay to simulate passing time, adjust delay as necessary
-        time.sleep(5)
+        marker = folium.Marker([point['latitude'], point['longitude']], popup=f"Timestamp: {point['timestamp']}s")
+        fg.add_child(marker)
+        st.session_state['markers'].append(marker)
+        st.session_state['center'] = (point['latitude'], point['longitude'])
+        st_folium(m, center=st.session_state['center'], zoom=st.session_state['zoom'], feature_group_to_add=fg, height=400, width=700)
+        time.sleep(5)  # Delay to simulate time passage
 
 # Button to start the playback simulation
 if st.button('Play Saunter'):
-    play_saunter(saunter_data)
+    update_map(saunter_data)
