@@ -1,13 +1,12 @@
 import streamlit as st
+from streamlit_folium import st_folium
 import folium
 from folium.plugins import MarkerCluster
 import random
 from pydub import AudioSegment
-import numpy as np
 
 # Function to generate random locations in New York City
 def generate_random_location():
-    # New York City bounding box coordinates
     min_lat, max_lat = 40.477399, 40.917577
     min_lon, max_lon = -74.259090, -73.700272
     latitude = random.uniform(min_lat, max_lat)
@@ -41,13 +40,12 @@ def create_map(data):
 
 # Initially create the map with all markers
 saunter_map = create_map(saunter_data)
-map_html = saunter_map._repr_html_()
 
 # Display audio player
 st.audio(audio_path, format='audio/mp3')
 
-# Display map
-st.markdown(map_html, unsafe_allow_html=True)
+# Display map using st_folium
+st_folium(saunter_map, width=725, height=500)
 
 # Button to update the map for demonstration of path
 if st.button('Show Path'):
@@ -56,4 +54,4 @@ if st.button('Show Path'):
         st.session_state['index'] = index + 1
     # Redraw the map with only part of the data
     partial_map = create_map(saunter_data[:st.session_state['index']])
-    st.markdown(partial_map._repr_html_(), unsafe_allow_html=True)
+    st_folium(partial_map, width=725, height=500)
