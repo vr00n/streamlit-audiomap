@@ -13,25 +13,8 @@ import requests
 st.set_page_config(page_title='Saunter Playback', page_icon=':walking:')
 st.title('Saunter Playback')
 
-# Function to download the MP3 file from GitHub
-def download_mp3(url):
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        # Save the MP3 file locally
-        with open('audio.mp3', 'wb') as file:
-            file.write(response.content)
-        
-        st.success('MP3 file downloaded successfully!')
-    else:
-        st.error('Failed to download the MP3 file.')
-
-# Download the MP3 file from the specified GitHub URL
-mp3_url = 'https://github.com/vr00n/streamlit-audiomap/raw/main/ny-doc.mp3'
-download_mp3(mp3_url)
-
 # Load the downloaded MP3 file
-audio_path = 'audio.mp3'
+audio_path = 'ny-doc.mp3'
 audio = AudioSegment.from_mp3(audio_path)
 
 # Get the duration of the audio in seconds
